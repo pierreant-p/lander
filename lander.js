@@ -17,6 +17,30 @@ const ship = {
     rotationSpeed: 7
 };
 
+
+const moon = [];
+for (let i = 0; i < canvas.width; i++) {
+    if (i === 0) {
+        moon[i] = canvas.height - 100;
+    } else {
+        // moon[i] = canvas.height - 100;
+        const step = (Math.random() * 2 - 1 ) * 15;
+        let newElevation = Math.min(moon[i-1] + step, canvas.height);
+        newElevation = Math.max(newElevation, canvas.height/2 + ship.height/2);
+        moon[i] = newElevation;
+    }
+}
+
+const stars = [];
+for (let i = 0; i < canvas.width; i++) {
+    stars[i] = [];
+    for (let j = 0; j < moon[i]; j++) {
+
+        stars[i][j] = Math.random() < 0.001 ? 1 : 0;
+    }
+}
+
+
 const drawShip = (ship, ctx) => {
     ctx.fillStyle = "red";
     // draw the center for the ship
@@ -52,6 +76,28 @@ const drawSpace = (canvas, ctx) => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 };
 
+const drawMoon = (moon, ctx) => {
+    ctx.beginPath();
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.moveTo(0, moon[0]);
+    for (let i=0; i< moon.length; i++) {
+        ctx.lineTo(i, moon[i]);
+    }
+    ctx.stroke();
+};
+
+
+const drawStars = (stars, ctx) => {
+    for (let i = 0; i<stars.length; i++) {
+        for (let j = 0; j<stars[i].length; j++) {
+            if (stars[i][j] === 1) {
+                ctx.fillStyle = '#E0E0E0';
+                ctx.fillRect(i, j, 1, 1);
+            }
+        }
+    }
+}
+
 const gameLoop = function() {
     ship.vy -= gravity;
     if (ship.isEngineOn) {
@@ -61,12 +107,15 @@ const gameLoop = function() {
     ship.y -= ship.vy;
     ship.x += ship.vx;
 
-    // ship touches ground
-    if (ship.y + ship.height/2 > canvas.height) {
-        ship.y = canvas.height - ship.height/2;
-        ship.vy = 0;
-        ship.vx = 0;
-    }
+    // // ship touches moon
+    // for (let i=-ship.width/2; i<ship.width/2; i++) {
+    //     if (ship.y + ship.height/2 >= moon[Math.floor(i+ship.x/2)]) {
+    //         ship.y = ship.height/2 + moon[ship.x];
+    //         ship.vy = 0;
+    //         ship.vx = 0;
+    //         break;
+    //     }
+    // }
 
     // ship touches top
     if (ship.y - ship.height/2 <= 0) {
@@ -94,6 +143,8 @@ const gameLoop = function() {
     // render
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawSpace(canvas, ctx);
+    drawStars(stars, ctx);
+    drawMoon(moon, ctx);
     drawShip(ship, ctx);
 };
 
