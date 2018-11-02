@@ -14,9 +14,23 @@ const ship = {
     engineThrust: .3,
     isEngineOn: false,
     angle: 0,
-    rotationSpeed: 7
+    rotationSpeed: 7,
+    cannonLength: 20
 };
 
+const createMissile = (ship) => {
+    const speed = 10;
+    return {
+        x: ship.x + ship.width * Math.sin(ship.angle * Math.PI / 180) /2,
+        y: ship.y - ship.height * Math.cos(ship.angle * Math.PI / 180) /2,
+        angle: ship.angle,
+        vx: speed * Math.sin(ship.angle * Math.PI / 180) + ship.vx,
+        vy: -speed * Math.cos(ship.angle * Math.PI / 180) - ship.vy,
+        color: "green"
+    };
+};
+
+const missiles = [];
 
 const moon = [];
 for (let i = 0; i < canvas.width; i++) {
@@ -56,7 +70,7 @@ const drawShip = (ship, ctx) => {
     ctx.strokeRect(-ship.width / 2, -ship.height / 2 , ship.width, ship.height);
     ctx.beginPath();
     ctx.moveTo(0, -ship.height/2);
-    ctx.lineTo(0, -20);
+    ctx.lineTo(0, -ship.cannonLength);
     ctx.stroke();
 
     if (ship.isEngineOn) {
@@ -96,9 +110,25 @@ const drawStars = (stars, ctx) => {
             }
         }
     }
-}
+};
+
+const drawMissiles = (missiles, ctx) => {
+    for (let i = 0; i < missiles.length; i++) {
+        const missile = missiles[i];
+        ctx.beginPath();
+
+        const len = 20;
+        ctx.moveTo(missile.x, missile.y);
+        ctx.lineTo(
+            missile.x+ len * Math.sin(missile.angle * Math.PI / 180),
+            missile.y -  len * Math.cos(missile.angle * Math.PI / 180));
+        ctx.strokeStyle = missile.color;
+        ctx.stroke();
+    }
+};
 
 const gameLoop = function() {
+    // move ship
     ship.vy -= gravity;
     if (ship.isEngineOn) {
         ship.vy += ship.engineThrust * Math.cos(ship.angle * Math.PI / 180);
@@ -140,16 +170,36 @@ const gameLoop = function() {
         ship.vy = 0;
     }
 
+    // move missiles
+    for (var i=0; i<missiles.length; i++) {
+        missiles[i].x += missiles[i].vx;
+        missiles[i].y += missiles[i].vy;
+
+        // remove offbound missiles
+        if (missiles[i].x < 0 ||
+            missiles[i].x > canvas.width ||
+            missiles[i].y < 0 ||
+            missiles[i].y > canvas.height
+           ) {
+            missiles.splice(i, 1);
+        }
+    }
+
     // render
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawSpace(canvas, ctx);
     drawStars(stars, ctx);
     drawMoon(moon, ctx);
     drawShip(ship, ctx);
+    drawMissiles(missiles, ctx);
 };
 
 document.addEventListener('keydown', (event) => {
     switch (event.keyCode) {
+    case 32:  // space
+        const missile = createMissile(ship);
+        missiles.push(missile);
+        break;
     case 37:  // left
         ship.angle -= ship.rotationSpeed;
         break;
